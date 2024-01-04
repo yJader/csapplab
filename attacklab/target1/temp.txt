@@ -1,0 +1,11 @@
+./hex2raw <c_t1.txt >str && ./ctarget -q <str
+r ./hex2raw <c_t1.txt >str && -q <str
+r ./hex2raw <c_t2.txt >str && -q <str
+
+ctarget
+main -> stable_launch -> launch -> test -> getbuf
+
+touch2:  0x59b997fa
+
+touch3: string need to be stored in other space instead of in stack
+answer string by byte sequence(hex): 35 39 62 39 37 66 61
