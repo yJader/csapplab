@@ -172,24 +172,24 @@ word f_stat = [
 
 # Does fetched instruction require a regid byte?
 # ②iaddq需要寄存器标识符
-bool need_regids = icode in 
+bool need_regids = f_icode in 
 	{ IRRMOVQ, IOPQ, IPUSHQ, IPOPQ, 
 		     IIRMOVQ, IRMMOVQ, IMRMOVQ, 
 			 IIADDQ};
 
 # Does fetched instruction require a constant word?
 # ③iaddq需要常数
-bool need_valC = icode in 
+bool need_valC = f_icode in 
 	{ IIRMOVQ, IRMMOVQ, IMRMOVQ, IJXX, ICALL, 
 		IIADDQ };
 
 # Predict next value of PC
 word f_predPC = [
 ### 直接跳转
-	# f_icode in { IJXX, ICALL } : f_valC; 
+	f_icode in { IJXX, ICALL } : f_valC; 
 ### 反向跳转, 正向不跳转策略
-	f_icode == IJXX && f_valC < f_valP : f_valC;
-	f_icode == ICALL : f_valC;
+	# f_icode == IJXX && f_valC < f_valP : f_valC;
+	# f_icode == ICALL : f_valC;
 	1 : f_valP;
 ];
 
