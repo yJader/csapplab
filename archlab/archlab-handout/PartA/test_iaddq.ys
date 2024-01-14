@@ -1,0 +1,4 @@
+.pos 0
+    irmovq $0x1111, %rax
+    iaddq $1, %rax
+    iaddq $0x2222, %rax

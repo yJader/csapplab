@@ -156,11 +156,9 @@ word f_ifun = [
 ];
 
 # Is instruction valid?
-# ①iaddq指令有效
 bool instr_valid = f_icode in 
 	{ INOP, IHALT, IRRMOVQ, IIRMOVQ, IRMMOVQ, IMRMOVQ,
-	  IOPQ, IJXX, ICALL, IRET, IPUSHQ, IPOPQ, 
-	  IIADDQ};
+	  IOPQ, IJXX, ICALL, IRET, IPUSHQ, IPOPQ };
 
 # Determine status code for fetched instruction
 word f_stat = [
@@ -171,25 +169,17 @@ word f_stat = [
 ];
 
 # Does fetched instruction require a regid byte?
-# ②iaddq需要寄存器标识符
-bool need_regids = icode in 
-	{ IRRMOVQ, IOPQ, IPUSHQ, IPOPQ, 
-		     IIRMOVQ, IRMMOVQ, IMRMOVQ, 
-			 IIADDQ};
+bool need_regids =
+	f_icode in { IRRMOVQ, IOPQ, IPUSHQ, IPOPQ, 
+		     IIRMOVQ, IRMMOVQ, IMRMOVQ };
 
 # Does fetched instruction require a constant word?
-# ③iaddq需要常数
-bool need_valC = icode in 
-	{ IIRMOVQ, IRMMOVQ, IMRMOVQ, IJXX, ICALL, 
-		IIADDQ };
+bool need_valC =
+	f_icode in { IIRMOVQ, IRMMOVQ, IMRMOVQ, IJXX, ICALL };
 
 # Predict next value of PC
 word f_predPC = [
-### 直接跳转
-	# f_icode in { IJXX, ICALL } : f_valC; 
-### 反向跳转, 正向不跳转策略
-	f_icode == IJXX && f_valC < f_valP : f_valC;
-	f_icode == ICALL : f_valC;
+	f_icode in { IJXX, ICALL } : f_valC;
 	1 : f_valP;
 ];
 
@@ -204,17 +194,15 @@ word d_srcA = [
 ];
 
 ## What register should be used as the B source?
-# ④iaddq指令译码阶段的srcB为rB
 word d_srcB = [
-	D_icode in { IOPQ, IRMMOVQ, IMRMOVQ, IIADDQ  } : D_rB;
+	D_icode in { IOPQ, IRMMOVQ, IMRMOVQ  } : D_rB;
 	D_icode in { IPUSHQ, IPOPQ, ICALL, IRET } : RRSP;
 	1 : RNONE;  # Don't need register
 ];
 
 ## What register should be used as the E destination?
-# ⑤iaddq指令写回阶段的dstE为rB
 word d_dstE = [
-	D_icode in { IRRMOVQ, IIRMOVQ, IOPQ, IIADDQ } : D_rB;
+	D_icode in { IRRMOVQ, IIRMOVQ, IOPQ} : D_rB;
 	D_icode in { IPUSHQ, IPOPQ, ICALL, IRET } : RRSP;
 	1 : RNONE;  # Don't write any register
 ];
@@ -249,20 +237,18 @@ word d_valB = [
 ################ Execute Stage #####################################
 
 ## Select input A to ALU
-# ⑥iaddq指令执行阶段aluA为valC
 word aluA = [
 	E_icode in { IRRMOVQ, IOPQ } : E_valA;
-	E_icode in { IIRMOVQ, IRMMOVQ, IMRMOVQ, IIADDQ } : E_valC;
+	E_icode in { IIRMOVQ, IRMMOVQ, IMRMOVQ } : E_valC;
 	E_icode in { ICALL, IPUSHQ } : -8;
 	E_icode in { IRET, IPOPQ } : 8;
 	# Other instructions don't need ALU
 ];
 
 ## Select input B to ALU
-# ⑦iaddq指令执行阶段aluB为valB
 word aluB = [
 	E_icode in { IRMMOVQ, IMRMOVQ, IOPQ, ICALL, 
-		     IPUSHQ, IRET, IPOPQ, IIADDQ } : E_valB;
+		     IPUSHQ, IRET, IPOPQ } : E_valB;
 	E_icode in { IRRMOVQ, IIRMOVQ } : 0;
 	# Other instructions don't need ALU
 ];
@@ -274,18 +260,12 @@ word alufun = [
 ];
 
 ## Should the condition codes be updated?
-# ⑧iaddq指令执行阶段set_cc为true
-bool set_cc = (E_icode == IOPQ || E_icode == IIADDQ ) &&
+bool set_cc = E_icode == IOPQ &&
 	# State changes only during normal operation
 	!m_stat in { SADR, SINS, SHLT } && !W_stat in { SADR, SINS, SHLT };
 
 ## Generate valA in execute stage
-# ???哪来的valA
 word e_valA = E_valA;    # Pass valA through stage
-# word e_valA = [
-#     E_icode in { IRMMOVQ, IPUSHQ } && E_srcA == M_dstM : m_valM; #在要写dstM和要读的srcA寄存器相同时，就用访存得到的valM去运算
-#     1 : E_valA;    # Pass valA through stage
-# ];
 
 ## Set dstE to RNONE in event of not-taken conditional move
 word e_dstE = [
