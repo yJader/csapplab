@@ -25,8 +25,7 @@ Loop:
 	rmmovq %r10, (%rsi)	# ...and store it to dst
 	andq %r10, %r10		# val <= 0?
 	jle Npos		# if so, goto Npos:
-	irmovq $1, %r10
-	addq %r10, %rax		# count++
+	iaddq $1, %rax		# count++
 Npos:	
 	iaddq $-1, %rdx		# len--
 	iaddq $8, %rdi		# src++
