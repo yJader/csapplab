@@ -1,0 +1,8 @@
+{
+    "files.associations": {
+        "*.ys": "asm-intel-x86-generic",
+        "*.yo": "asm-intel-x86-generic",
+        "*.hcl": "powershell",
+        "cachelab.h": "c"
+    }
+}
