@@ -1,6 +1,7 @@
 #include "cachelab.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 struct CacheLine
 {
@@ -16,7 +17,7 @@ int s; // 组索引位数
 int E; // 每组的行数
 int b; // 块内偏移位数
 FILE *traceFile;
-int verboseFlag = 0;
+int verboseFlag = 0, cmpFlag = 0;
 
 void readArgs(int argc, char *argv[]);
 Cache initCache();
@@ -28,7 +29,8 @@ int main(int argc, char *argv[])
     Cache cache = initCache(s, E);
 
     char type;
-    int address, size;
+    long unsigned int address;
+    int size;
     int hits = 0, misses = 0, evictions = 0;
 
     while (fscanf(traceFile, "%c %lx,%d\n", &type, &address, &size) != EOF)
@@ -37,7 +39,7 @@ int main(int argc, char *argv[])
         {
             continue;
         }
-        printf("信息: %c %x,%d\t", type, address, size);
+        printf("%c %lx,%d ", type, address, size);
 
         int addr = address >> b;              // 去掉块内偏移位
         int tag = addr >> s;                  // 取出标记位
@@ -50,7 +52,7 @@ int main(int argc, char *argv[])
                 cache[setIndex][i].time = 0;
                 if (verboseFlag)
                 {
-                    printf("hits", address);
+                    printf("hit");
                 }
                 break;
             }
@@ -62,7 +64,7 @@ int main(int argc, char *argv[])
                 cache[setIndex][i].time = 0;
                 if (verboseFlag)
                 {
-                    printf("miss", address);
+                    printf("miss");
                 }
                 break;
             }
@@ -73,6 +75,9 @@ int main(int argc, char *argv[])
                 // LRU, 找到最大的time
                 int maxTime = cache[setIndex][0].time;
                 int maxIndex = 0;
+                if(!cmpFlag) {
+                    printf("\n\tcache[setIndex][0].time = %d\n", cache[setIndex][0].time);
+                }
                 for (int j = 1; j < E; j++)
                 {
                     if (cache[setIndex][j].time > maxTime)
@@ -80,13 +85,15 @@ int main(int argc, char *argv[])
                         maxTime = cache[setIndex][j].time;
                         maxIndex = j;
                     }
-                    printf("cache[setIndex][%d].time = %d\n", j, cache[setIndex][j].time);
+                    if(!cmpFlag){
+                        printf("\tcache[setIndex][%d].time = %d\n", j, cache[setIndex][j].time);
+                    }
                 }
                 cache[setIndex][maxIndex].tag = tag;
                 cache[setIndex][maxIndex].time = 0;
                 if (verboseFlag)
                 {
-                    printf("miss eviction", address);
+                    printf("miss eviction");
                 }
             }
             // LRU, 其他行的time++
@@ -95,7 +102,7 @@ int main(int argc, char *argv[])
         if (type == 'M')
         {
             hits++;
-            printf(" hits");
+            printf(" hit");
         }
         printf("\n");
     }
@@ -108,7 +115,7 @@ char *optarg;
 void readArgs(int argc, char *argv[])
 {
     int opt;
-    while ((opt = getopt(argc, argv, "hvs:E:b:t:")) != -1)
+    while ((opt = getopt(argc, argv, "hvs:E:b:t:c")) != -1)
     {
         switch (opt)
         {
@@ -137,8 +144,11 @@ void readArgs(int argc, char *argv[])
         case 't':
             traceFile = fopen(optarg, "r");
             break;
+        case 'c':
+            cmpFlag=1;
+            break;
         default:
-            fprintf(stderr, "Usage: %s [-s <s>] [-E <E>] [-b <b>] [-t <tracefile>]\n", argv[0]);
+            fprintf(stderr, "Usage: %s [-s <s>] [-E <E>] [-b <b>] [-t <tracefile>] [-c]\n", argv[0]);
             exit(1);
         }
     }
