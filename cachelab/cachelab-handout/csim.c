@@ -41,9 +41,9 @@ int main(int argc, char *argv[])
         }
         printf("%c %lx,%d ", type, address, size);
 
-        int addr = address >> b;              // 去掉块内偏移位
-        int tag = addr >> s;                  // 取出标记位
-        int setIndex = addr & ((1 << s) - 1); // 取出组索引位
+        unsigned int addr = address >> b;              // 去掉块内偏移位
+        unsigned int tag = addr >> s;                  // 取出标记位
+        unsigned int setIndex = addr & ((1 << s) - 1); // 取出组索引位
         for (int i = 0; i < E; i++)
         {
             if (cache[setIndex][i].valid && cache[setIndex][i].tag == tag) // 命中
@@ -75,8 +75,9 @@ int main(int argc, char *argv[])
                 // LRU, 找到最大的time
                 int maxTime = cache[setIndex][0].time;
                 int maxIndex = 0;
-                if(!cmpFlag) {
-                    printf("\n\tcache[setIndex][0].time = %d\n", cache[setIndex][0].time);
+                if (!cmpFlag)
+                {
+                    printf("\n\tcache[%d][0].time = %d\n", setIndex, cache[setIndex][0].time);
                 }
                 for (int j = 1; j < E; j++)
                 {
@@ -85,8 +86,9 @@ int main(int argc, char *argv[])
                         maxTime = cache[setIndex][j].time;
                         maxIndex = j;
                     }
-                    if(!cmpFlag){
-                        printf("\tcache[setIndex][%d].time = %d\n", j, cache[setIndex][j].time);
+                    if (!cmpFlag)
+                    {
+                        printf("\tcache[%d][%d].time = %d\n", setIndex, j, cache[setIndex][j].time);
                     }
                 }
                 cache[setIndex][maxIndex].tag = tag;
@@ -96,9 +98,17 @@ int main(int argc, char *argv[])
                     printf("miss eviction");
                 }
             }
-            // LRU, 其他行的time++
-            cache[setIndex][i].time++;
         }
+
+        // 更新time
+        for (int i = 0; i < E; i++)
+        {
+            if (cache[setIndex][i].valid)
+            {
+                cache[setIndex][i].time++;
+            }
+        }
+
         if (type == 'M')
         {
             hits++;
@@ -143,9 +153,14 @@ void readArgs(int argc, char *argv[])
             break;
         case 't':
             traceFile = fopen(optarg, "r");
+            if (traceFile == NULL)
+            {
+                fprintf(stderr, "Error: trace file %s not found\n", optarg);
+                exit(1);
+            }
             break;
         case 'c':
-            cmpFlag=1;
+            cmpFlag = 1;
             break;
         default:
             fprintf(stderr, "Usage: %s [-s <s>] [-E <E>] [-b <b>] [-t <tracefile>] [-c]\n", argv[0]);
