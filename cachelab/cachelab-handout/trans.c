@@ -157,6 +157,20 @@ void tran64_64(int M, int N, int A[N][M], int B[M][N])
 
 void tran61_67(int M, int N, int A[N][M], int B[M][N])
 {
+    int i, j, k, h;
+    for (i = 0; i < N; i += 16)
+    {
+        for (j = 0; j < M; j += 16)
+        {
+            for (k = i; k < i + 16 && k < N; k++)
+            {
+                for (h = j; h < j + 16 && h < M; h++)
+                {
+                    B[h][k] = A[k][h];
+                }
+            }
+        }
+    }
 }
 
 /*
